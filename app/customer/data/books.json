@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "The Pragmatic Programmer",
+    "author": "Andrew Hunt & David Thomas",
+    "price": 1800,
+    "description": "A classic guide to software craftsmanship.",
+    "cover_image": "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=500&q=80"
+  },
+  {
+    "id": 2,
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "price": 1500,
+    "description": "A handbook of agile software craftsmanship.",
+    "cover_image": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=500&q=80"
+  },
+  {
+    "id": 3,
+    "title": "JavaScript: The Good Parts",
+    "author": "Douglas Crockford",
+    "price": 1300,
+    "description": "Unearthing the excellence in JavaScript.",
+    "cover_image": "https://images.unsplash.com/photo-1581090700227-1e8a3d1b90fe?auto=format&fit=crop&w=500&q=80"
+  }
+]
