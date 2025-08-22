@@ -135,7 +135,7 @@ export default function InvoicePage() {
         {/* Footer */}
         <div style={{ marginTop: '1.5rem', textAlign: 'center', color: '#6b7280', fontSize: '0.875rem' }}>
           <p>Thank you for shopping at Brightmind books!</p>
-          <p>Email: support@Brightmind booksbookshop.com | Phone: +254 712 345678</p>
+          <p>Email: support@Brightmind books.co.ke | Phone: +254 712 345678</p>
         </div>
       </div>
 

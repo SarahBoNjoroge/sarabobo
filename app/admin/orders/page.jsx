@@ -34,6 +34,10 @@ export default function AdminOrdersPage() {
             <p><strong>Date:</strong> {order.order_date}</p>
             <p><strong>Total Amount:</strong> Ksh {parseFloat(order.total_amount).toFixed(2)}</p>
 
+            {/* NEW FIELDS */}
+            <p><strong>Address:</strong> {order.address || "N/A"}</p>
+
+
             <h4 className="font-medium mt-4">Items:</h4>
             <table className="w-full mt-2 border border-gray-300">
               <thead className="bg-gray-100">

@@ -50,15 +50,17 @@ while ($order = $orderResult->fetch_assoc()) {
     ];
   }
 
+  // ✅ Add delivery address + location if they exist in your orders table
   $orders[] = [
     "id" => $orderId,
     "customer_id" => $order['customer_id'],
     "order_date" => $order['order_date'],
     "total_amount" => $order['total_amount'],
+    "address" => $order['address'] ?? null,
     "items" => $items,
   ];
 }
 
 // Output JSON
-echo json_encode(["success" => true, "orders" => $orders]);
+echo json_encode(["success" => true, "orders" => $orders], JSON_PRETTY_PRINT);
 $mysqli->close();
