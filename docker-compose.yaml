@@ -24,7 +24,7 @@ services:
     ports:
      - "8000" 
     networks:
-     - app-network
+     - app-network 
        
   frontend:
     build:
