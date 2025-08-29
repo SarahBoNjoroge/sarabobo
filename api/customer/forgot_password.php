@@ -17,7 +17,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 if ($mysqli->connect_errno) {
     echo json_encode(["success" => false, "message" => "Database connection failed"]);
     exit;

@@ -2,9 +2,9 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$host = 'localhost';
+$host = 'mysql';
 $user = 'root';
-$pass = '';
+$pass = '1234';
 $db = 'bookshop';
 
 $conn = new mysqli($host, $user, $pass, $db);

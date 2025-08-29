@@ -5,7 +5,7 @@ header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 // Connect to the database
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 
 if ($mysqli->connect_errno) {
     echo json_encode([

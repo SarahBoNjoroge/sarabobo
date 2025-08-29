@@ -73,7 +73,7 @@ export default function CartPage() {
     };
 
     try {
-      const res = await fetch('http://localhost/bookshop/api/orders/place_order.php', {
+      const res = await fetch('/bookshop/api/orders/place_order.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

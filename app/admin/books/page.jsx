@@ -16,7 +16,7 @@ export default function AdminBooksPage() {
 
   const fetchBooks = async () => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/books/index.php');
+      const res = await fetch('http://process.env.server/bookshop/api/books/index.php');
       const data = await res.json();
       if (data.success) setBooks(data.books);
     } catch (err) {
@@ -62,8 +62,8 @@ export default function AdminBooksPage() {
 
     try {
       const url = isEditing
-        ? 'http://localhost/bookshop/api/admin/books/update.php'
-        : 'http://localhost/bookshop/api/books/add.php';
+        ? 'http://process.env.server/bookshop/api/admin/books/update.php'
+        : 'http://process.env.server/bookshop/api/books/add.php';
 
       const res = await fetch(url, {
         method: 'POST',
@@ -101,7 +101,7 @@ export default function AdminBooksPage() {
     if (!confirm('Are you sure you want to delete this book?')) return;
 
     try {
-      const res = await fetch(`http://localhost/bookshop/api/admin/books/delete.php?id=${id}`, {
+      const res = await fetch(`http://process.env.server/bookshop/api/admin/books/delete.php?id=${id}`, {
         method: 'GET',
       });
       const data = await res.json();

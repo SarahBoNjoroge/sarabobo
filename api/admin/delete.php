@@ -7,7 +7,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Create connection
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 
 // Check connection
 if ($mysqli->connect_errno) {

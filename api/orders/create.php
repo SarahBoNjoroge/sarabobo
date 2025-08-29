@@ -4,7 +4,7 @@ header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "", "bookshop");
+$conn = new mysqli("mysql", "root", "1234", "bookshop");
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "DB connection failed"]);
     exit;

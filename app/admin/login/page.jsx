@@ -23,7 +23,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost/bookshop/api/admin/login.php', {
+      const res = await fetch('http://process.env.server/bookshop/api/admin/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

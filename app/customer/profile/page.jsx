@@ -35,7 +35,7 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`http://127.0.0.1/bookshop/api/customer/profile.php?id=${customerId}`);
+        const res = await fetch(`/bookshop/api/customer/profile.php?id=${customerId}`);
         const data = await res.json();
 
         if (data.success && data.data) {
@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch('http://127.0.0.1/bookshop/api/customer/update_profile.php', {
+      const res = await fetch('/bookshop/api/customer/update_profile.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: profile.id, ...form }),

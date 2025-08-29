@@ -61,7 +61,7 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      const res = await fetch("http://localhost/bookshop/api/customer/register.php", {
+      const res = await fetch("/api/customer/register.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

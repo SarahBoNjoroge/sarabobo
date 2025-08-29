@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 
 $result = $mysqli->query("SELECT r.id, r.review, r.rating, r.created_at, c.username 
                           FROM reviews r 

@@ -9,7 +9,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 // Connect to the database
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 
 // Check connection
 if ($mysqli->connect_errno) {

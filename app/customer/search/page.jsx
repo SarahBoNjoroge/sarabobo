@@ -16,7 +16,7 @@ function SearchResultsContent() {
       if (!query) return;
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1/bookshop/api/search.php?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/bookshop/api/search.php?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         setResults(data);
       } catch (err) {
@@ -45,7 +45,7 @@ function SearchResultsContent() {
           {results.map((item, index) => (
             <div key={index} className="bg-white p-4 rounded shadow hover:shadow-lg transition">
               <img
-                src={`http://127.0.0.1/bookshop/uploads/${item.image}`}
+                src={`http://process.env.server/bookshop/uploads/${item.image}`}
                 alt={item.title}
                 className="h-40 w-full object-cover mb-3 rounded"
               />

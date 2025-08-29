@@ -10,7 +10,7 @@ error_reporting(E_ERROR);
 ob_clean();
 
 // Connect to DB
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql", "root", "1234", "bookshop");
 
 if ($mysqli->connect_errno) {
   echo json_encode(["success" => false, "message" => "DB connection failed."]);

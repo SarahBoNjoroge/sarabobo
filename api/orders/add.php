@@ -4,7 +4,7 @@ header("Content-Type: application/json");
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$conn = new mysqli("localhost", "root", "", "bookshop");
+$conn = new mysqli("mysql", "root", "1234", "bookshop");
 
 if ($conn->connect_error) {
   echo json_encode(["success" => false, "message" => "Database connection failed"]);

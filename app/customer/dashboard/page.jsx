@@ -22,7 +22,7 @@ export default function BooksPage() {
   const [quantities, setQuantities] = useState({});
 
   useEffect(() => {
-    fetch('http://localhost/bookshop/api/books/index.php')
+    fetch('/bookshop/api/books/index.php')
       .then(res => res.json())
       .then(data => data.success ? setBooks(data.books) : setError('Failed to load books.'))
       .catch(() => setError('Network error.'));

@@ -2,7 +2,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "", "bookshop");
+$conn = new mysqli("mysql", "root", "1234", "bookshop");
 
 if ($conn->connect_error) {
   echo json_encode(["success" => false, "message" => "Database connection failed"]);

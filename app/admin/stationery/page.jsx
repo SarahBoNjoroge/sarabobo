@@ -14,7 +14,7 @@ export default function AdminStationeryPage() {
 
   const fetchStationery = async () => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/admin/index.php');
+      const res = await fetch('http://process.env.server/bookshop/api/admin/index.php');
       const data = await res.json();
       if (data.success && Array.isArray(data.stationery)) {
         setItems(data.stationery);
@@ -57,8 +57,8 @@ export default function AdminStationeryPage() {
 
     try {
       const url = isEditing
-        ? 'http://localhost/bookshop/api/admin/update_stationery.php'
-        : 'http://localhost/bookshop/api/admin/add_stationery.php';
+        ? 'http://process.env.server/bookshop/api/admin/update_stationery.php'
+        : 'http://process.env.server/bookshop/api/admin/add_stationery.php';
 
       const res = await fetch(url, {
         method: 'POST',
@@ -94,7 +94,7 @@ export default function AdminStationeryPage() {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      const res = await fetch(`http://localhost/bookshop/api/admin/delete_stationery.php?id=${id}`);
+      const res = await fetch(`http://process.env.server/bookshop/api/admin/delete_stationery.php?id=${id}`);
       const data = await res.json();
       if (data.success) {
         alert('🗑️ Deleted successfully');

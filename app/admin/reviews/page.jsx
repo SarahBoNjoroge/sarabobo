@@ -6,7 +6,7 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://127.0.0.1/bookshop/api/admin/fetch_reviews.php')
+    fetch('http://process.env.server/bookshop/api/admin/fetch_reviews.php')
       .then(res => res.json())
       .then(data => {
         if (data.success) setReviews(data.reviews);
