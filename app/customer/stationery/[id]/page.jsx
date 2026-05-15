@@ -13,11 +13,8 @@ export default function StationeryDetail() {
     fetch(`http://localhost/bookshop/api/stationery/show.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setItem(data.item);
-        } else {
-          setError('Item not found.');
-        }
+        if (data.success) setItem(data.item);
+        else setError('Item not found.');
       })
       .catch(() => setError('Network error.'));
   }, [id]);
@@ -32,14 +29,15 @@ export default function StationeryDetail() {
       cart.push({
         type: 'stationery',
         id: item.id,
-        title: item.name,
+        name: item.name,
         price: parseFloat(item.price),
-        quantity
+        quantity,
+        image: item.image || null, // ✅ FIXED
       });
     }
 
     localStorage.setItem('sharedCart', JSON.stringify(cart));
-    alert('Item added to cart');
+    alert('Stationery added to cart');
   };
 
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -55,16 +53,11 @@ export default function StationeryDetail() {
 
       <div className="flex gap-2">
         <input
-          type="number"
-          min={1}
-          value={quantity}
+          type="number" min={1} value={quantity}
           onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
           className="w-16 border px-2 py-1 rounded"
         />
-        <button
-          onClick={addToCart}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
+        <button onClick={addToCart} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Add to Cart
         </button>
       </div>

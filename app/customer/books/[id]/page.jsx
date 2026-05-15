@@ -1,4 +1,3 @@
-// /app/customer/books/[id]/page.jsx
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -13,22 +12,17 @@ export default function BookDetails() {
 
   useEffect(() => {
     if (!id) return;
-
     fetch(`http://localhost/bookshop/api/books/show.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setBook(data.book);
-        } else {
-          setError('Book not found.');
-        }
+        if (data.success) setBook(data.book);
+        else setError('Book not found.');
       })
       .catch(() => setError('Network error.'));
   }, [id]);
 
   const addToCart = () => {
     if (!book) return;
-
     const cart = JSON.parse(localStorage.getItem('sharedCart')) || [];
     const index = cart.findIndex(item => item.type === 'book' && item.id === book.book_id);
 
@@ -40,7 +34,8 @@ export default function BookDetails() {
         id: book.book_id,
         title: book.title,
         price: parseFloat(book.price),
-        quantity
+        quantity,
+        image: book.cover_image || null, // ✅ FIXED
       });
     }
 
@@ -62,20 +57,14 @@ export default function BookDetails() {
 
       <div className="flex gap-2">
         <input
-          type="number"
-          min={1}
-          value={quantity}
+          type="number" min={1} value={quantity}
           onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
           className="w-16 border px-2 py-1 rounded"
         />
-        <button
-          onClick={addToCart}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
+        <button onClick={addToCart} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Add to Cart
         </button>
       </div>
     </div>
   );
 }
-

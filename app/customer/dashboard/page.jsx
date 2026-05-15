@@ -4,14 +4,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CartIcon from '../../components/CartIcon';
 
-// Child component that uses useSearchParams
 function BookSearchParamsInfo() {
-  // Dynamically import useSearchParams to avoid SSR issues
   const { useSearchParams } = require('next/navigation');
   const searchParams = useSearchParams();
-  // Example: get a query param (not used in this code, but you can expand)
-  const filter = searchParams.get('filter');
-  // Render nothing or some info
   return null;
 }
 
@@ -46,17 +41,18 @@ export default function BooksPage() {
         id: book.book_id,
         title: book.title,
         price: parseFloat(book.price),
-        quantity
+        quantity,
+        image: book.cover_image || null, // ✅ FIXED: save image
       });
     }
 
     localStorage.setItem('sharedCart', JSON.stringify(currentCart));
     setQuantities(prev => ({ ...prev, [book.book_id]: 1 }));
+    alert('Book added to cart!');
   };
 
   return (
     <div className="p-6 min-h-screen bg-gray-100 relative">
-      {/* Top bar with CartIcon, title, and navigation */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <Link href="/customer/home" className="text-blue-600 hover:underline">🏠 Home</Link>
@@ -66,10 +62,7 @@ export default function BooksPage() {
         <CartIcon />
       </div>
 
-      {/* Suspense boundary for child component using useSearchParams */}
-      <Suspense fallback={null}>
-        <BookSearchParamsInfo />
-      </Suspense>
+      <Suspense fallback={null}><BookSearchParamsInfo /></Suspense>
 
       {error && <p className="text-center text-red-600">{error}</p>}
 
@@ -93,9 +86,7 @@ export default function BooksPage() {
 
             <div className="flex items-center gap-2 mt-2">
               <input
-                type="number"
-                min={1}
-                value={quantities[book.book_id] || 1}
+                type="number" min={1} value={quantities[book.book_id] || 1}
                 onChange={e => handleQuantityChange(book.book_id, e.target.value)}
                 className="w-16 border px-2 py-1 rounded"
               />

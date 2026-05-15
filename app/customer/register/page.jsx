@@ -4,9 +4,7 @@ import Link from 'next/link';
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Child component that uses useSearchParams
 function RegisterQueryMessage() {
-  // Import here to avoid "use client" warning in parent
   const { useSearchParams } = require('next/navigation');
   const searchParams = useSearchParams();
   const ref = searchParams.get('ref');
@@ -22,7 +20,9 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
+    full_name: '',
     username: '',
+    phone: '',
     email: '',
     password: '',
   });
@@ -40,14 +40,29 @@ export default function RegisterPage() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-    else if (formData.username.length < 3) newErrors.username = 'Username must be at least 3 characters';
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email address';
+    if (!formData.full_name.trim())
+      newErrors.full_name = 'Full name is required';
 
-    if (!formData.password.trim()) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!formData.username.trim())
+      newErrors.username = 'Username is required';
+    else if (formData.username.length < 3)
+      newErrors.username = 'Username must be at least 3 characters';
+
+    if (!formData.phone.trim())
+      newErrors.phone = 'Phone number is required';
+    else if (!/^(07|01)\d{8}$/.test(formData.phone))
+      newErrors.phone = 'Use format 07XXXXXXXX or 01XXXXXXXX';
+
+    if (!formData.email.trim())
+      newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      newErrors.email = 'Invalid email address';
+
+    if (!formData.password.trim())
+      newErrors.password = 'Password is required';
+    else if (formData.password.length < 6)
+      newErrors.password = 'Password must be at least 6 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,23 +83,22 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
-      console.log(data);
 
       if (data.success) {
         localStorage.removeItem("customerId");
         localStorage.removeItem("customerName");
+        localStorage.removeItem("customerPhone");
         localStorage.removeItem("sharedCart");
         localStorage.removeItem("lastOrderId");
 
-        localStorage.setItem("customerId", data.userId || data.customer_id);
+        localStorage.setItem("customerId", data.userId);
         localStorage.setItem("customerName", data.username || formData.username);
+        localStorage.setItem("customerPhone", data.phone || formData.phone);
 
         setSuccess(true);
-        setFormData({ username: '', email: '', password: '' });
+        setFormData({ full_name: '', username: '', phone: '', email: '', password: '' });
 
-        setTimeout(() => {
-          router.push('/customer/home');
-        }, 2000);
+        setTimeout(() => router.push('/customer/home'), 2000);
       } else {
         setErrors({ general: data.message || "Registration failed" });
       }
@@ -99,9 +113,7 @@ export default function RegisterPage() {
   return (
     <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-center p-6"
-      style={{
-        backgroundImage: `url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1470&q=80')`,
-      }}
+      style={{ backgroundImage: `url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1470&q=80')` }}
     >
       <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
 
@@ -109,6 +121,7 @@ export default function RegisterPage() {
         <Suspense fallback={null}>
           <RegisterQueryMessage />
         </Suspense>
+
         {success ? (
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -118,10 +131,7 @@ export default function RegisterPage() {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Account Created!</h2>
             <p className="text-gray-600 mb-6">Redirecting you to your dashboard...</p>
-            <button
-              onClick={() => router.push('/customer/home')}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
-            >
+            <button onClick={() => router.push('/customer/home')} className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
               Go to Home
             </button>
           </div>
@@ -130,77 +140,79 @@ export default function RegisterPage() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Create Your Account</h2>
 
             {errors.general && (
-              <div className="bg-red-100 text-red-700 px-4 py-2 mb-4 rounded">
-                {errors.general}
-              </div>
+              <div className="bg-red-100 text-red-700 px-4 py-2 mb-4 rounded">{errors.general}</div>
             )}
 
             <form onSubmit={handleSubmit} className="text-gray-600 space-y-4">
+
+              {/* Full Name */}
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Full Name</label>
+                <input
+                  type="text" name="full_name" value={formData.full_name} onChange={handleChange}
+                  className={`w-full border px-4 py-2 rounded ${errors.full_name ? 'border-red-400' : 'border-gray-300'}`}
+                  disabled={loading} placeholder="Your full name"
+                />
+                {errors.full_name && <p className="text-red-600 text-sm mt-1">{errors.full_name}</p>}
+              </div>
+
+              {/* Username */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Username</label>
                 <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
+                  type="text" name="username" value={formData.username} onChange={handleChange}
                   className={`w-full border px-4 py-2 rounded ${errors.username ? 'border-red-400' : 'border-gray-300'}`}
-                  disabled={loading}
-                  placeholder="Your username"
+                  disabled={loading} placeholder="Choose a username"
                 />
                 {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
               </div>
 
+              {/* Phone */}
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Phone Number</label>
+                <input
+                  type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                  className={`w-full border px-4 py-2 rounded ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
+                  disabled={loading} placeholder="07XXXXXXXX"
+                />
+                {errors.phone && <p className="text-red-600 text-sm mt-1">{errors.phone}</p>}
+              </div>
+
+              {/* Email */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  type="email" name="email" value={formData.email} onChange={handleChange}
                   className={`w-full border px-4 py-2 rounded ${errors.email ? 'border-red-400' : 'border-gray-300'}`}
-                  disabled={loading}
-                  placeholder="you@example.com"
+                  disabled={loading} placeholder="you@example.com"
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
               </div>
 
+              {/* Password */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
                   <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
+                    type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange}
                     className={`w-full border px-4 py-2 rounded pr-10 ${errors.password ? 'border-red-400' : 'border-gray-300'}`}
-                    disabled={loading}
-                    placeholder="At least 6 characters"
+                    disabled={loading} placeholder="At least 6 characters"
                   />
-                  <span
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-600 text-xl"
-                    title={showPassword ? "Hide Password" : "Show Password"}
-                  >
+                  <span onClick={() => setShowPassword(!showPassword)} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-600 text-xl">
                     {showPassword ? "🚫" : "👁"}
                   </span>
                 </div>
                 {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 transition"
-              >
+              <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700 transition">
                 {loading ? 'Creating Account...' : 'Sign Up'}
               </button>
             </form>
 
             <p className="text-sm text-center text-gray-600 mt-4">
               Already have an account?{' '}
-              <Link href="/customer/login" className="text-emerald-600 hover:underline">
-                Log in
-              </Link>
+              <Link href="/customer/login" className="text-emerald-600 hover:underline">Log in</Link>
             </p>
           </>
         )}

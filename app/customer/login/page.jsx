@@ -2,44 +2,37 @@
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-// --- Child component using useSearchParams ---
 import { useSearchParams } from 'next/navigation';
 
 function LoginQueryMessage() {
   const searchParams = useSearchParams();
   const msg = searchParams.get('msg');
   if (!msg) return null;
-  return (
-    <div className="text-green-600 text-sm text-center mb-2">
-      {msg}
-    </div>
-  );
+  return <div className="text-green-600 text-sm text-center mb-2">{msg}</div>;
 }
 
-// --- Parent component ---
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const togglePassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!form.phone || !form.password) {
+      setError('Phone number and password are required');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/customer/login.php`, {
+      const res = await fetch("http://localhost/bookshop/api/customer/login.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -53,23 +46,23 @@ export default function LoginPage() {
         if (data.success) {
           localStorage.removeItem("customerId");
           localStorage.removeItem("customerName");
+          localStorage.removeItem("customerPhone");
           localStorage.removeItem("sharedCart");
           localStorage.removeItem("lastOrderId");
 
           localStorage.setItem("customerId", data.userId);
-          if (data.name) {
-            localStorage.setItem("customerName", data.name);
-          }
+          localStorage.setItem("customerName", data.username || data.name || '');
+          localStorage.setItem("customerPhone", data.phone || form.phone);
 
           router.push("/customer/home");
         } else {
-          setError(data.message || "Invalid email or password");
+          setError(data.message || "Invalid phone number or password");
         }
-      } catch (jsonErr) {
-        setError("Server error. Not returning JSON.");
+      } catch {
+        setError("Server error. Please try again.");
       }
-    } catch (err) {
-      setError("Network or server error. Please try again.");
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,71 +72,55 @@ export default function LoginPage() {
     <div className="flex justify-center items-center min-h-screen bg-gray-100 relative">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-30"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1470&q=80')"
-        }}
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1470&q=80')" }}
       ></div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="z-10 bg-white p-6 rounded-lg shadow-lg w-full max-w-sm space-y-4"
-      >
+      <form onSubmit={handleSubmit} className="z-10 bg-white p-6 rounded-lg shadow-lg w-full max-w-sm space-y-4">
         <h2 className="text-2xl text-gray-600 font-bold text-center">Customer Login</h2>
 
-        {/* Suspense boundary for child */}
         <Suspense fallback={null}>
           <LoginQueryMessage />
         </Suspense>
 
-        <input
-          type="email"
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder="Email"
-          className="w-full px-3 py-2 border rounded text-black"
-          required
-        />
-
-        <div className="relative">
+        {/* Phone */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Phone Number</label>
           <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Password"
+            type="tel" name="phone" value={form.phone} onChange={handleChange}
+            placeholder="07XXXXXXXX"
             className="w-full px-3 py-2 border rounded text-black"
             required
           />
-          <span
-            onClick={togglePassword}
-            className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-600 text-xl"
-            title={showPassword ? "Hide Password" : "Show Password"}
-          >
-            {showPassword ? "🚫" : "👁"}
-          </span>
+        </div>
+
+        {/* Password */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Password</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"} name="password" value={form.password} onChange={handleChange}
+              placeholder="Password"
+              className="w-full px-3 py-2 border rounded text-black"
+              required
+            />
+            <span onClick={() => setShowPassword(!showPassword)} className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-600 text-xl">
+              {showPassword ? "🚫" : "👁"}
+            </span>
+          </div>
         </div>
 
         <div className="text-right">
-          <Link href="/customer/forgot" className="text-blue-500 text-sm hover:underline">
-            Forgot Password?
-          </Link>
+          <Link href="/customer/forgot" className="text-blue-500 text-sm hover:underline">Forgot Password?</Link>
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-          disabled={loading}
-        >
+        <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
           {loading ? "Logging in..." : "Login"}
         </button>
 
         {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
         <div className="text-center">
-          <Link href="/customer/register" className="text-blue-600 hover:underline">
-            Don't have an account? Sign Up
-          </Link>
+          <Link href="/customer/register" className="text-blue-600 hover:underline">Don't have an account? Sign Up</Link>
         </div>
       </form>
     </div>
