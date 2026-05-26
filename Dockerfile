@@ -9,6 +9,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli pdo pdo_mysql zip \
     && apt-get clean
 
+# Fix Apache MPM conflict — disable mpm_event, enable mpm_prefork
+RUN a2dismod mpm_event || true \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite
+
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -21,10 +26,7 @@ COPY . .
 # Install PHP dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --ignore-platform-reqs --no-interaction --no-progress
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Apache config
+# Apache config — allow .htaccess and serve all files
 RUN echo '<Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
