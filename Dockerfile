@@ -1,18 +1,13 @@
-FROM php:8.3-apache
+FROM php:8.3-cli
 
-# Install system dependencies
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
     curl \
     && docker-php-ext-install mysqli pdo pdo_mysql zip \
-    && apt-get clean
-
-# Fix Apache MPM conflict — disable mpm_event, enable mpm_prefork
-RUN a2dismod mpm_event || true \
-    && a2enmod mpm_prefork \
-    && a2enmod rewrite
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -20,18 +15,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy all project files
+# Copy project files
 COPY . .
 
 # Install PHP dependencies
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --ignore-platform-reqs --no-interaction --no-progress
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
+    --ignore-platform-reqs \
+    --no-interaction \
+    --no-progress \
+    --no-dev
 
-# Apache config — allow .htaccess and serve all files
-RUN echo '<Directory /var/www/html>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-    </Directory>' > /etc/apache2/conf-available/custom.conf \
-    && a2enconf custom
-
-EXPOSE 80
+# Use PHP built-in server — no Apache, no MPM conflicts
+CMD php -S 0.0.0.0:$PORT -t /var/www/html
