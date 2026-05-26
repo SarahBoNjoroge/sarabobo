@@ -1,7 +1,13 @@
 FROM php:8.3-apache
 
-# Install mysqli and other extensions
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    curl \
+    && docker-php-ext-install mysqli pdo pdo_mysql zip \
+    && apt-get clean
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -13,17 +19,17 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install PHP dependencies
-RUN composer install --ignore-platform-reqs --no-interaction --no-progress
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --ignore-platform-reqs --no-interaction --no-progress
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-# Set Apache to serve from root so /api/books/index.php works
+# Apache config
 RUN echo '<Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/custom.conf \
+    </Directory>' > /etc/apache2/conf-available/custom.conf \
     && a2enconf custom
 
 EXPOSE 80
