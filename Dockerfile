@@ -25,5 +25,6 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-progress \
     --no-dev
 
-# Use PHP built-in server — no Apache, no MPM conflicts
-CMD php -S 0.0.0.0:$PORT -t /var/www/html
+EXPOSE 80
+
+CMD ["php", "-S", "0.0.0.0:80", "-t", "/var/www/html"]
