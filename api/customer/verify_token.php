@@ -4,7 +4,7 @@ date_default_timezone_set('Africa/Nairobi');  // or 'UTC' if your DB uses UTC
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$mysqli = new mysqli("localhost", "root", "", "bookshop");
+$mysqli = new mysqli("mysql.railway.internal", "root", "jPTqOuiOdjJjqfAfuzOwIuXqmVqGjQBe", "bookshop", 3306);
 
 $token = $_GET['token'] ?? '';
 

@@ -4,7 +4,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 
 // DB connection
-$conn = new mysqli("localhost", "root", "", "bookshop");
+$conn = new mysqli("mysql.railway.internal", "root", "jPTqOuiOdjJjqfAfuzOwIuXqmVqGjQBe", "bookshop", 3306);
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Database connection failed"]);
     exit;
