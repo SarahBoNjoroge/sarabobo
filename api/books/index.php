@@ -3,7 +3,6 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-
 $conn = new mysqli("localhost", "sarabobo", "1234", "bookshop");
 
 if ($conn->connect_error) {
@@ -11,13 +10,13 @@ if ($conn->connect_error) {
   exit;
 }
 
-$sql = "SELECT book_id, title, author, price, stock, description, created_at, cover_image FROM books";
+// ✅ FIXED: added level, grade, subject
+$sql    = "SELECT book_id, title, author, price, stock, description, created_at, cover_image, level, grade, subject FROM books";
 $result = $conn->query($sql);
 
 $books = [];
 
 while ($row = $result->fetch_assoc()) {
-  // If 'cover_image' has just the file name, append full URL
   $row['cover_image'] = "http://localhost/bookshop/uploads/" . $row['cover_image'];
   $books[] = $row;
 }
@@ -25,3 +24,4 @@ while ($row = $result->fetch_assoc()) {
 echo json_encode(["success" => true, "books" => $books]);
 
 $conn->close();
+?>

@@ -160,7 +160,7 @@ export default function InvoicePage() {
       >
         {/* HEADER */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <img src="/logo.png" style={{ height: '64px' }} />
+          <img src="/Brightmind books.png" style={{ height: '64px' }} />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
             Brightmind Books
           </h1>

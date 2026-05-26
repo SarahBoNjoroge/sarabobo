@@ -42,12 +42,17 @@ export default function CartPage() {
     localStorage.setItem('sharedCart', JSON.stringify(updated));
   };
 
+  // ✅ CHECK LOGIN BEFORE CHECKOUT
   const handleGoToCheckout = () => {
     if (cart.length === 0) { setMessage('❗ Cart is empty.'); return; }
+    const customerId = localStorage.getItem('customerId');
+    if (!customerId) {
+      router.push('/customer/login?msg=Please login to checkout');
+      return;
+    }
     router.push('/customer/checkout');
   };
 
-  // ✅ Use real saved image, fallback by type
   const getItemImage = (item) => {
     if (item.image) return item.image;
     if (item.type === 'book')
@@ -55,7 +60,6 @@ export default function CartPage() {
     return 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=80&h=80&fit=crop';
   };
 
-  // System colors: purple #6b21a8, yellow #f59e0b, dark purple #4c1d95
   const purple = '#6b21a8';
   const darkPurple = '#4c1d95';
   const yellow = '#f59e0b';
@@ -64,17 +68,22 @@ export default function CartPage() {
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <style>{`
+        @media (max-width: 768px) {
+          .cart-grid { grid-template-columns: 1fr !important; }
+          .cart-item { flex-wrap: wrap; }
+        }
+      `}</style>
       <div style={{ minHeight: '100vh', background: '#f3f0ff', fontFamily: "'DM Sans', sans-serif", padding: '24px 16px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ background: purple, borderRadius: 10, padding: '8px 12px', fontSize: 22 }}>🛒</div>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: darkPurple, margin: 0 }}>Shopping Cart</h1>
               <p style={{ fontSize: 13, color: '#7c3aed', margin: 0 }}>{cart.length} item{cart.length !== 1 ? 's' : ''} in your cart</p>
             </div>
-            {/* Back to shop */}
             <button
               onClick={() => router.push('/customer/home')}
               style={{ marginLeft: 'auto', background: 'none', border: `1.5px solid ${purple}`, color: purple, borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
@@ -85,18 +94,16 @@ export default function CartPage() {
 
           <Suspense fallback={null}><CartQueryParams /></Suspense>
           {message && (
-            <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 6, padding: '10px 16px', marginBottom: 16, fontSize: 14, color: '#92400e' }}>
+            <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 6, padding: '10px 16px', marginBottom: 16, fontSize: 14, color: '#000000', fontWeight: 600 }}>
               {message}
             </div>
           )}
 
           {/* Two-column layout */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
+          <div className="cart-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
 
             {/* LEFT: Items */}
             <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px rgba(107,33,168,0.08)', overflow: 'hidden' }}>
-
-              {/* Panel header */}
               <div style={{ background: purple, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Your Items</span>
                 <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>{cart.length} product{cart.length !== 1 ? 's' : ''}</span>
@@ -116,54 +123,45 @@ export default function CartPage() {
                 </div>
               ) : (
                 cart.map((item, idx) => (
-                  <div key={idx} style={{
+                  <div key={idx} className="cart-item" style={{
                     display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px',
                     borderBottom: idx < cart.length - 1 ? '1px solid #f3f0ff' : 'none',
-                    transition: 'background 0.15s',
                   }}>
-                    {/* Product image */}
                     <img
                       src={getItemImage(item)}
                       alt={item.title || item.name}
-                      style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', border: '2px solid #ede9fe', flexShrink: 0, background: '#f5f3ff' }}
+                      style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', border: '2px solid #ede9fe', flexShrink: 0 }}
                       onError={e => {
                         e.target.src = item.type === 'book'
                           ? 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=80&h=80&fit=crop'
                           : 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=80&h=80&fit=crop';
                       }}
                     />
-
-                    {/* Info */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#000000', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.title || item.name}
                       </div>
                       <div style={{ fontSize: 12, color: '#7c3aed', textTransform: 'capitalize', marginBottom: 4, fontWeight: 500 }}>
                         {item.type}
                       </div>
-                      <div style={{ fontSize: 13, color: '#6b7280' }}>
+                      {/* ✅ STRONG BLACK price */}
+                      <div style={{ fontSize: 13, color: '#000000', fontWeight: 600 }}>
                         Ksh {Number(item.price).toLocaleString()} each
                       </div>
                     </div>
 
                     {/* Qty controls */}
                     <div style={{ display: 'flex', alignItems: 'center', border: `1.5px solid ${purple}`, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
-                      <button
-                        onClick={() => updateQty(item.id, item.type, -1)}
-                        style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}
-                      >−</button>
-                      <span style={{ width: 34, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: darkPurple, borderLeft: `1px solid #ede9fe`, borderRight: `1px solid #ede9fe` }}>
+                      <button onClick={() => updateQty(item.id, item.type, -1)} style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}>−</button>
+                      <span style={{ width: 34, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#000000', borderLeft: `1px solid #ede9fe`, borderRight: `1px solid #ede9fe` }}>
                         {item.quantity}
                       </span>
-                      <button
-                        onClick={() => updateQty(item.id, item.type, 1)}
-                        style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}
-                      >+</button>
+                      <button onClick={() => updateQty(item.id, item.type, 1)} style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}>+</button>
                     </div>
 
-                    {/* Subtotal + remove */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: darkPurple }}>
+                      {/* ✅ STRONG BLACK subtotal */}
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#000000' }}>
                         Ksh {(item.price * item.quantity).toLocaleString()}
                       </span>
                       <button
@@ -180,49 +178,40 @@ export default function CartPage() {
 
             {/* RIGHT: Order Summary */}
             <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px rgba(107,33,168,0.08)', overflow: 'hidden', position: 'sticky', top: 20 }}>
-
               <div style={{ background: darkPurple, padding: '14px 20px' }}>
                 <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Order Summary</span>
               </div>
-
               <div style={{ padding: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#555' }}>
-                  <span>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
-                  <span style={{ fontWeight: 600, color: '#1a1a1a' }}>Ksh {total.toLocaleString()}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#000000' }}>
+                  <span style={{ fontWeight: 600 }}>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
+                  <span style={{ fontWeight: 700, color: '#000000' }}>Ksh {total.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#555' }}>
-                  <span>Delivery</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#000000' }}>
+                  <span style={{ fontWeight: 600 }}>Delivery</span>
                   <span style={{ color: '#16a34a', fontWeight: 600 }}>At checkout</span>
                 </div>
-
                 <hr style={{ border: 'none', borderTop: '1px dashed #ede9fe', margin: '14px 0' }} />
-
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Total</span>
-                  <span style={{ fontSize: 22, fontWeight: 700, color: darkPurple }}>Ksh {total.toLocaleString()}</span>
+                  {/* ✅ STRONG BLACK total */}
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#000000' }}>Total</span>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: '#000000' }}>Ksh {total.toLocaleString()}</span>
                 </div>
-
-                {/* Checkout button — yellow like system */}
                 <button
                   onClick={handleGoToCheckout}
                   disabled={cart.length === 0}
                   style={{
-                    width: '100%', padding: 13, background: yellow, color: '#1a1a1a',
+                    width: '100%', padding: 13, background: yellow, color: '#000000',
                     border: 'none', borderRadius: 6, fontSize: 15, fontWeight: 700,
                     cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                    marginBottom: 10, letterSpacing: 0.3,
-                    opacity: cart.length === 0 ? 0.5 : 1,
-                    transition: 'background 0.2s'
+                    marginBottom: 10, opacity: cart.length === 0 ? 0.5 : 1,
                   }}
                   onMouseOver={e => e.target.style.background = yellowHover}
                   onMouseOut={e => e.target.style.background = yellow}
                 >
                   Proceed to Checkout →
                 </button>
-
               </div>
             </div>
-
           </div>
         </div>
       </div>
