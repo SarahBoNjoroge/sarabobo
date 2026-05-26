@@ -17,7 +17,7 @@ $result = $conn->query($sql);
 $books = [];
 
 while ($row = $result->fetch_assoc()) {
-  $row['cover_image'] = "http://localhost/bookshop/uploads/" . $row['cover_image'];
+ $row['cover_image'] = "https://tender-empathy-production-c8ad.up.railway.app/uploads/" . $row['cover_image'];
   $books[] = $row;
 }
 

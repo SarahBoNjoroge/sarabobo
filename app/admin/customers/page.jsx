@@ -5,7 +5,7 @@ export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost/bookshop/api/admin/customers.php')
+    fetch('https://tender-empathy-production-c8ad.up.railway.app/api/admin/customers.php')
       .then(res => res.json())
       .then(data => {
         if (data.success) setCustomers(data.customers);

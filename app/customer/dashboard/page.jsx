@@ -44,7 +44,7 @@ export default function BooksPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost/bookshop/api/books/index.php')
+    fetch('https://tender-empathy-production-c8ad.up.railway.app/api/books/index.php')
       .then(res => res.json())
       .then(data => data.success ? setBooks(data.books) : setError('Failed to load books.'))
       .catch(() => setError('Network error.'));

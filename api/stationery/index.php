@@ -20,7 +20,7 @@ $result = $conn->query($sql);
 $items = [];
 
 while ($row = $result->fetch_assoc()) {
-    $row['image'] = "http://localhost/bookshop/uploads/" . $row['image'];
+    $row['cover_image'] = "https://tender-empathy-production-c8ad.up.railway.app/uploads/" . $row['cover_image'];
     $items[] = $row;
 }
 

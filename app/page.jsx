@@ -47,13 +47,13 @@ export default function LandingPage() {
 
   useEffect(() => {
     // Fetch featured books
-    fetch('http://localhost/bookshop/api/books/index.php')
+    fetch('https://tender-empathy-production-c8ad.up.railway.app/api/books/index.php')
       .then(res => res.json())
       .then(data => { if (data.success) setBooks(data.books.slice(0, 4)); })
       .catch(() => { });
 
     // Fetch featured stationery
-    fetch('http://localhost/bookshop/api/stationery/index.php')
+    fetch('https://tender-empathy-production-c8ad.up.railway.app/api/stationery/index.php')
       .then(res => res.json())
       .then(data => { if (data.success) setStationery(data.items.slice(0, 4)); })
       .catch(() => { })

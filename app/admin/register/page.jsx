@@ -12,7 +12,7 @@ export default function AdminRegister() {
 
   const fetchAdmins = async () => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/admin/admins.php');
+      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/admin/admins.php');
       const data = await res.json();
       if (data.success && Array.isArray(data.admins)) {
         setAdmins(data.admins);
@@ -44,8 +44,8 @@ export default function AdminRegister() {
     setError('');
 
     const url = isEditing
-      ? 'http://localhost/bookshop/api/admin/update.php'
-      : 'http://localhost/bookshop/api/admin/register.php';
+      ? 'https://tender-empathy-production-c8ad.up.railway.app/api/admin/update.php'
+      : 'https://tender-empathy-production-c8ad.up.railway.app/api/admin/register.php';
 
     try {
       const res = await fetch(url, {
@@ -77,7 +77,7 @@ export default function AdminRegister() {
     if (!confirm('Are you sure you want to delete this admin?')) return;
 
     try {
-      const res = await fetch(`http://localhost/bookshop/api/admin/delete.php?id=${id}`, {
+      const res = await fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/admin/delete.php?id=${id}`, {
         method: 'GET',
       });
       const data = await res.json();

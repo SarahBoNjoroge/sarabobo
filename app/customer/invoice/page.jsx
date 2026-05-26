@@ -32,7 +32,7 @@ export default function InvoicePage() {
   useEffect(() => {
     if (!orderId) return;
 
-    fetch(`http://localhost/bookshop/api/invoice.php?order_id=${orderId}`)
+    fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/invoice.php?order_id=${orderId}`)
       .then(res => res.text())
       .then(text => {
         try {
@@ -84,7 +84,7 @@ export default function InvoicePage() {
       const phone = prompt("Enter M-Pesa number (2547XXXXXXXX)");
       if (!phone) return;
 
-      const res = await fetch("http://localhost/bookshop/api/pay.php", {
+      const res = await fetch("https://tender-empathy-production-c8ad.up.railway.app/api/pay.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

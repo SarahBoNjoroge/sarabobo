@@ -42,7 +42,7 @@ export default function AdminBooksPage() {
 
   const fetchBooks = async () => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/books/index.php');
+      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/books/index.php');
       const data = await res.json();
       if (data.success) setBooks(data.books);
     } catch (err) {
@@ -80,8 +80,8 @@ export default function AdminBooksPage() {
 
     try {
       const url = isEditing
-        ? 'http://localhost/bookshop/api/admin/books/update.php'
-        : 'http://localhost/bookshop/api/books/add.php';
+        ? 'https://tender-empathy-production-c8ad.up.railway.app/api/admin/books/update.php'
+        : 'https://tender-empathy-production-c8ad.up.railway.app/api/books/add.php';
 
       const res = await fetch(url, { method: 'POST', body: formData });
       const data = await res.json();
@@ -118,7 +118,7 @@ export default function AdminBooksPage() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this book?')) return;
     try {
-      const res = await fetch(`http://localhost/bookshop/api/admin/books/delete.php?id=${id}`);
+      const res = await fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/admin/books/delete.php?id=${id}`);
       const data = await res.json();
       if (data.success) { alert('Deleted!'); fetchBooks(); }
       else alert(data.message || 'Failed');

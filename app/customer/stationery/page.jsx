@@ -26,7 +26,7 @@ export default function StationeryPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost/bookshop/api/stationery/index.php')
+    fetch('https://tender-empathy-production-c8ad.up.railway.app/api/stationery/index.php')
       .then(res => res.json())
       .then(data => {
         if (data.success) setItems(data.items);

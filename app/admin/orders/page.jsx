@@ -6,7 +6,7 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/admin/order_items.php');
+      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/admin/order_items.php');
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
@@ -22,7 +22,7 @@ export default function AdminOrdersPage() {
 
   const updateStatus = async (order_id, status) => {
     try {
-      const res = await fetch('http://localhost/bookshop/api/admin/update_order_status.php', {
+      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/admin/update_order_status.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id, status })

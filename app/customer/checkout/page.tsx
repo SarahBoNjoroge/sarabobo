@@ -64,7 +64,7 @@ export default function CheckoutPage() {
         };
 
         try {
-            const res = await fetch("http://localhost/bookshop/api/orders/add.php", {
+            const res = await fetch("https://tender-empathy-production-c8ad.up.railway.app/api/orders/add.php", {
                 method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             });
             const data = await res.json();

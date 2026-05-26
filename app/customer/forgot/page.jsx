@@ -17,7 +17,7 @@ function ForgotPasswordForm() {
     setMessage('');
 
     try {
-      const res = await fetch('http://localhost/bookshop/api/customer/forgot_password.php', {
+      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/customer/forgot_password.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

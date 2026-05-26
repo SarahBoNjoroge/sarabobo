@@ -32,7 +32,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost/bookshop/api/customer/login.php", {
+      const res = await fetch("https://tender-empathy-production-c8ad.up.railway.app/api/customer/login.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
