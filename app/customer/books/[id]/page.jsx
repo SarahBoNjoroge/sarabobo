@@ -12,7 +12,7 @@ export default function BookDetails() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost/bookshop/api/books/show.php?id=${id}`)
+    fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/books/show.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setBook(data.book);

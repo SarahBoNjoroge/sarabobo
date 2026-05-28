@@ -10,7 +10,7 @@ export default function StationeryDetail() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    fetch(`http://localhost/bookshop/api/stationery/show.php?id=${id}`)
+    fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/stationery/show.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setItem(data.item);
