@@ -12,7 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once('../../app/db/connection.php');
+$conn = new mysqli("mysql.railway.internal", "root", "jPTqOuiOdjJjqfAfuzOwIuXqmVqGjQBe", "bookshop", 3306);
+if ($conn->connect_error) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit;
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -27,44 +31,50 @@ if (!$username || !$full_name || !$phone || !$email || !$password) {
     exit;
 }
 
-// Validate phone (must be 10 digits starting with 07 or 01)
 if (!preg_match('/^(07|01)\d{8}$/', $phone)) {
     echo json_encode(['success' => false, 'message' => 'Invalid phone number. Use format 07XXXXXXXX.']);
     exit;
 }
 
-try {
-    // Check email exists
-    $stmt = $db->prepare("SELECT customer_id FROM customers WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => false, 'message' => 'Email already registered.']);
-        exit;
-    }
+// Check email exists
+$stmt = $conn->prepare("SELECT customer_id FROM customers WHERE email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$stmt->store_result();
+if ($stmt->num_rows > 0) {
+    echo json_encode(['success' => false, 'message' => 'Email already registered.']);
+    exit;
+}
+$stmt->close();
 
-    // Check phone exists
-    $stmt2 = $db->prepare("SELECT customer_id FROM customers WHERE phone = ?");
-    $stmt2->execute([$phone]);
-    if ($stmt2->rowCount() > 0) {
-        echo json_encode(['success' => false, 'message' => 'Phone number already registered.']);
-        exit;
-    }
+// Check phone exists
+$stmt2 = $conn->prepare("SELECT customer_id FROM customers WHERE phone = ?");
+$stmt2->bind_param("s", $phone);
+$stmt2->execute();
+$stmt2->store_result();
+if ($stmt2->num_rows > 0) {
+    echo json_encode(['success' => false, 'message' => 'Phone number already registered.']);
+    exit;
+}
+$stmt2->close();
 
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    $insert = $db->prepare("INSERT INTO customers (username, full_name, phone, email, password) VALUES (?, ?, ?, ?, ?)");
-    $insert->execute([$username, $full_name, $phone, $email, $hashedPassword]);
+$insert = $conn->prepare("INSERT INTO customers (username, full_name, phone, email, password) VALUES (?, ?, ?, ?, ?)");
+$insert->bind_param("sssss", $username, $full_name, $phone, $email, $hashedPassword);
 
+if ($insert->execute()) {
     echo json_encode([
         'success'  => true,
-        'userId'   => $db->lastInsertId(),
+        'userId'   => $conn->insert_id,
         'username' => $username,
         'name'     => $full_name,
         'phone'    => $phone
     ]);
-
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Registration failed: ' . $conn->error]);
 }
+
+$insert->close();
+$conn->close();
 ?>

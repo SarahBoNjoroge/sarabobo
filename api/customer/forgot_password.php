@@ -1,11 +1,10 @@
 <?php
-date_default_timezone_set('Africa/Nairobi');  // or 'UTC' if your DB uses UTC
+date_default_timezone_set('Africa/Nairobi');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type");
-    header("Access-Control-Max-Age: 86400");
     http_response_code(200);
     exit;
 }
@@ -23,7 +22,7 @@ if ($mysqli->connect_errno) {
     exit;
 }
 
-$data = json_decode(file_get_contents("php://input"), true);
+$data  = json_decode(file_get_contents("php://input"), true);
 $email = $mysqli->real_escape_string($data['email'] ?? '');
 
 if (empty($email)) {
@@ -37,33 +36,39 @@ if ($result->num_rows === 0) {
     exit;
 }
 
-$user = $result->fetch_assoc();
-$token = bin2hex(random_bytes(16));
-$expiry = date("Y-m-d H:i:s", time() + 3600); // 1 hour expiry
+$user   = $result->fetch_assoc();
+$token  = bin2hex(random_bytes(16));
+$expiry = date("Y-m-d H:i:s", time() + 3600);
 
 $mysqli->query("UPDATE customers SET reset_token = '$token', reset_token_expiry = '$expiry' WHERE customer_id = {$user['customer_id']}");
 
-$link = "http://localhost:3000/customer/reset?token=$token";
+// ✅ Use live Vercel URL not localhost
+$link = "https://sarabobo-git-devops-sarahbonjoroges-projects.vercel.app/customer/reset?token=$token";
 
 $mail = new PHPMailer(true);
 try {
     $mail->isSMTP();
-    $mail->Host = 'smtp.gmail.com';
-    $mail->SMTPAuth = true;
-    $mail->Username = 'sarahwambuinjoroge22@gmail.com';
-    $mail->Password = 'sdhntelgcvmcstyg';
+    $mail->Host       = 'smtp.gmail.com';
+    $mail->SMTPAuth   = true;
+    $mail->Username   = 'sarahwambuinjoroge22@gmail.com';
+    $mail->Password   = 'sdhntelgcvmcstyg';
     $mail->SMTPSecure = 'tls';
-    $mail->Port = 587;
+    $mail->Port       = 587;
 
-    $mail->setFrom('noreply@bookshop.com', 'Brightmind books');
+    $mail->setFrom('noreply@brightmindbooks.co.ke', 'Brightmind Books');
     $mail->addAddress($email);
     $mail->isHTML(true);
-    $mail->Subject = 'Reset Your Password';
-    $mail->Body = "
-        <h3>Password Reset Request</h3>
-        <p>Click below to reset your password:</p>
-        <a href='$link'>Reset Password</a>
-        <p>This link expires in 1 hour.</p>
+    $mail->Subject = 'Reset Your Password - Brightmind Books';
+    $mail->Body    = "
+        <div style='font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;'>
+            <h2 style='color:#6b21a8'>Brightmind Books</h2>
+            <h3>Password Reset Request</h3>
+            <p>Click the button below to reset your password:</p>
+            <a href='$link' style='display:inline-block;background:#6b21a8;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;'>
+                Reset Password
+            </a>
+            <p style='color:#6b7280;margin-top:16px;font-size:13px;'>This link expires in 1 hour. If you did not request this, ignore this email.</p>
+        </div>
     ";
 
     $mail->send();
@@ -71,3 +76,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(["success" => false, "message" => "Email error: " . $mail->ErrorInfo]);
 }
+?>
