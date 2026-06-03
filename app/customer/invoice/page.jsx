@@ -4,9 +4,16 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useSearchParams } from 'next/navigation';
 
+const API = 'https://tender-empathy-production-c8ad.up.railway.app';
+const SHOP = {
+  name: 'Brightmind Books',
+  phone: '+254 700 000 000',
+  email: 'info@brightmindbooks.co.ke',
+  location: 'Thika, Kenya',
+};
+
 function InvoiceSearchParams() {
   const searchParams = useSearchParams();
-  const someParam = searchParams.get('someParam');
   return null;
 }
 
@@ -15,237 +22,189 @@ export default function InvoicePage() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const [orderId, setOrderId] = useState(null);
+  const [paying, setPaying] = useState(false);
+  const [payMsg, setPayMsg] = useState('');
   const invoiceRef = useRef();
 
-  // ✅ SAFE ORDER ID (URL + localStorage)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const urlParams = new URLSearchParams(window.location.search);
     const urlId = urlParams.get('order_id');
     const localId = localStorage.getItem('lastOrderId');
-
     setOrderId(urlId || localId);
   }, []);
 
-  // ✅ FETCH INVOICE
   useEffect(() => {
     if (!orderId) return;
-
-    fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/invoice.php?order_id=${orderId}`)
+    fetch(`${API}/api/invoice.php?order_id=${orderId}`)
       .then(res => res.text())
       .then(text => {
         try {
           const data = JSON.parse(text);
-
-          if (data.success) {
-            setOrder(data.order);
-            setItems(data.items);
-          } else {
-            setError(data.message || 'Failed to fetch invoice.');
-          }
-        } catch (e) {
-          console.log("RAW RESPONSE:", text);
-          setError("Server returned invalid JSON");
-        }
+          if (data.success) { setOrder(data.order); setItems(data.items); }
+          else setError(data.message || 'Failed to fetch invoice.');
+        } catch { setError('Server returned invalid response'); }
       })
-      .catch(() => setError('Network error.'));
+      .catch(() => setError('Network error. Please try again.'));
   }, [orderId]);
 
-  // ✅ TOTAL
-  const total = items?.reduce((sum, item) => {
-    return sum + parseFloat(item.total || 0);
-  }, 0) || 0;
+  const total = items?.reduce((sum, item) => sum + parseFloat(item.total || 0), 0) || 0;
 
-  // ✅ PDF DOWNLOAD
   const handleDownloadPDF = async () => {
-    const input = invoiceRef.current;
-
-    const canvas = await html2canvas(input, {
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      scale: 2,
-    });
-
+    const canvas = await html2canvas(invoiceRef.current, { backgroundColor: '#ffffff', useCORS: true, scale: 2 });
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-
     const width = pdf.internal.pageSize.getWidth();
     const imgProps = pdf.getImageProperties(imgData);
     const height = width / (imgProps.width / imgProps.height);
-
     pdf.addImage(imgData, 'PNG', 0, 0, width, height);
     pdf.save(`invoice_${order?.order_id}.pdf`);
   };
 
-  // ✅ FIXED PAYMENT FUNCTION
   const handlePayNow = async () => {
+    const phone = prompt('Enter M-Pesa number (format: 2547XXXXXXXX)');
+    if (!phone) return;
+    setPaying(true);
+    setPayMsg('');
     try {
-      const phone = prompt("Enter M-Pesa number (2547XXXXXXXX)");
-      if (!phone) return;
-
-      const res = await fetch("https://tender-empathy-production-c8ad.up.railway.app/api/pay.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          phone,
-          amount: total,
-          order_id: order.order_id
-        })
+      const res = await fetch(`${API}/api/pay.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, amount: total, order_id: order.order_id }),
       });
-
-      const text = await res.text();   // 👈 SAFE
-      console.log("RAW:", text);
-
-      const data = JSON.parse(text);
-
-      alert("📲 Check your phone");
-
-    } catch (err) {
-      console.error(err);
-      alert("❌ Payment failed - check backend");
+      const data = await res.json();
+      if (data.ResponseCode === '0' || data.success) {
+        setPayMsg('📲 STK push sent! Check your phone to complete payment.');
+      } else {
+        setPayMsg('Payment request sent. Check your phone.');
+      }
+    } catch {
+      setPayMsg('❌ Payment failed. Please try again.');
     }
+    setPaying(false);
   };
 
-  const deliveryFee = (() => {
-    if (!order?.delivery_type) return 0;
+  if (error) return (
+    <div style={{ minHeight: '100vh', background: '#f5f3ff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: "'Segoe UI', sans-serif" }}>
+      <div style={{ background: '#fff', borderRadius: '14px', padding: '40px', textAlign: 'center', border: '1px solid #ddd6fe' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
+        <p style={{ color: '#dc2626', fontSize: '16px' }}>{error}</p>
+      </div>
+    </div>
+  );
 
-    if (order.delivery_type === "doorstep") return 150;
-    if (order.delivery_type === "pickup") return 50;
-    if (order.delivery_type === "parcel") return 100;
-
-    return 0;
-  })();
-
-  // ❌ ERROR STATE
-  if (error) {
-    return (
-      <p style={{ textAlign: 'center', color: 'red', marginTop: '2rem' }}>
-        {error}
-      </p>
-    );
-  }
-
-  // ⏳ LOADING
-  if (!order) {
-    return (
-      <p style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
-        Loading invoice...
-      </p>
-    );
-  }
+  if (!order) return (
+    <div style={{ minHeight: '100vh', background: '#f5f3ff', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: "'Segoe UI', sans-serif" }}>
+      <p style={{ color: '#6b21a8', fontSize: '18px' }}>Loading invoice...</p>
+    </div>
+  );
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#ffffff', padding: '2rem 1rem' }}>
+    <div style={{ minHeight: '100vh', background: '#f5f3ff', fontFamily: "'Segoe UI', sans-serif", padding: '20px 16px' }}>
+      <Suspense fallback={null}><InvoiceSearchParams /></Suspense>
 
-      <Suspense fallback={null}>
-        <InvoiceSearchParams />
-      </Suspense>
-
-      {/* INVOICE */}
-      <div
-        ref={invoiceRef}
-        style={{
-          maxWidth: '700px',
-          margin: '0 auto',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 0 10px rgba(0,0,0,0.05)',
-          borderRadius: '0.75rem',
-          padding: '2rem',
-          border: '1px solid #e5e7eb',
-          color: '#111827'
-        }}
-      >
-        {/* HEADER */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <img src="/Brightmind books.png" style={{ height: '64px' }} />
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
-            Brightmind Books
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-            Official Invoice
-          </p>
-        </div>
-
-        {/* ORDER INFO */}
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <p><strong>Invoice ID:</strong> {order.order_id}</p>
-            <p><strong>Date:</strong> {order.order_date}</p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p><strong>Customer ID:</strong> {order.customer_id}</p>
-            <p><strong>Total Items:</strong> {items.length}</p>
-          </div>
-        </div>
-
-        {/* TABLE */}
-        <table style={{ width: '100%', marginTop: '1rem' }}>
-          <thead>
-            <tr>
-              <th align="left">Item</th>
-              <th>Qty</th>
-              <th align="right">Price</th>
-              <th align="right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, i) => (
-              <tr key={i}>
-                <td>{item.name}</td>
-                <td align="center">{item.quantity}</td>
-                <td align="right">Ksh {item.price}</td>
-                <td align="right">Ksh {item.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* TOTAL */}
-        <h3 style={{ textAlign: 'right', marginTop: '1rem' }}>
-          Total: Ksh {total.toFixed(2)}
-        </h3>
-
-        {/* FOOTER */}
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <p>Thank you for shopping with us!</p>
+      {/* Action buttons */}
+      <div style={{ maxWidth: '720px', margin: '0 auto 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <a href="/customer/home" style={{ color: '#6b21a8', textDecoration: 'none', fontWeight: 600, fontSize: '14px', padding: '10px 16px', background: '#fff', borderRadius: '8px', border: '1.5px solid #ddd6fe' }}>← Continue Shopping</a>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button onClick={handleDownloadPDF} style={{ background: '#6b21a8', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>⬇️ Download PDF</button>
+          <button onClick={handlePayNow} disabled={paying} style={{ background: '#f59e0b', color: '#1e1b4b', border: 'none', borderRadius: '8px', padding: '10px 18px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
+            {paying ? 'Processing...' : '📱 Pay via M-Pesa'}
+          </button>
         </div>
       </div>
 
-      {/* BUTTONS */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '1rem',
-        marginTop: '1.5rem'
-      }}>
-        <button
-          onClick={handleDownloadPDF}
-          style={{
-            background: '#2563eb',
-            color: '#fff',
-            padding: '10px',
-            borderRadius: '6px',
-            border: 'none'
-          }}
-        >
-          Download PDF
-        </button>
+      {payMsg && (
+        <div style={{ maxWidth: '720px', margin: '0 auto 16px', background: payMsg.includes('❌') ? '#fee2e2' : '#dcfce7', color: payMsg.includes('❌') ? '#dc2626' : '#16a34a', padding: '12px 16px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, textAlign: 'center' }}>
+          {payMsg}
+        </div>
+      )}
 
-        <button
-          onClick={handlePayNow}
-          style={{
-            background: '#16a34a',
-            color: '#fff',
-            padding: '10px',
-            borderRadius: '6px',
-            border: 'none'
-          }}
-        >
-          Pay Now
-        </button>
+      {/* Invoice */}
+      <div ref={invoiceRef} style={{ maxWidth: '720px', margin: '0 auto', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 24px rgba(107,33,168,0.10)', border: '1px solid #ddd6fe', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ background: '#6b21a8', padding: '28px 28px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#fbbf24', marginBottom: '4px' }}>📚 {SHOP.name}</div>
+            <div style={{ fontSize: '13px', color: '#e9d5ff' }}>Your CBC Learning Partner</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '10px', padding: '12px 18px', textAlign: 'right' }}>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>INVOICE</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#fbbf24' }}>#{order.order_id}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{order.order_date}</div>
+          </div>
+        </div>
+
+        {/* Contact strip */}
+        <div style={{ background: '#4c1d95', padding: '10px 28px', display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#fbbf24', fontWeight: 500 }}>
+          <span>📞 {SHOP.phone}</span>
+          <span>✉️ {SHOP.email}</span>
+          <span>📍 {SHOP.location}</span>
+        </div>
+
+        {/* Order info */}
+        <div style={{ padding: '20px 28px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', borderBottom: '1px solid #f3f0ff' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Order Details</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e1b4b' }}>Order #{order.order_id}</div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>Date: {order.order_date}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Status</div>
+            <span style={{ background: '#fef3c7', color: '#92400e', padding: '5px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>Pending Payment</span>
+          </div>
+        </div>
+
+        {/* Items table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f5f3ff' }}>
+                <th style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: '#4c1d95', textAlign: 'left', borderBottom: '2px solid #ddd6fe' }}>#</th>
+                <th style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: '#4c1d95', textAlign: 'left', borderBottom: '2px solid #ddd6fe' }}>Item</th>
+                <th style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: '#4c1d95', textAlign: 'center', borderBottom: '2px solid #ddd6fe' }}>Qty</th>
+                <th style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: '#4c1d95', textAlign: 'center', borderBottom: '2px solid #ddd6fe' }}>Unit Price</th>
+                <th style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: '#4c1d95', textAlign: 'right', borderBottom: '2px solid #ddd6fe' }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, i) => (
+                <tr key={i} style={{ background: i % 2 === 0 ? '#faf9ff' : '#fff' }}>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280', borderBottom: '1px solid #f3f0ff' }}>{i + 1}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#1e1b4b', fontWeight: 500, borderBottom: '1px solid #f3f0ff' }}>{item.name}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280', textAlign: 'center', borderBottom: '1px solid #f3f0ff' }}>{item.quantity}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b7280', textAlign: 'center', borderBottom: '1px solid #f3f0ff' }}>KSh {parseFloat(item.price).toLocaleString()}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#6b21a8', fontWeight: 700, textAlign: 'right', borderBottom: '1px solid #f3f0ff' }}>KSh {parseFloat(item.total).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Total */}
+        <div style={{ padding: '20px 28px', background: '#faf9ff', borderTop: '1px solid #ddd6fe' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '15px', color: '#1e1b4b' }}>
+            <span style={{ color: '#6b7280' }}>Subtotal</span>
+            <span>KSh {total.toLocaleString()}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 4px', marginTop: '8px', borderTop: '2px solid #ddd6fe' }}>
+            <span style={{ fontSize: '18px', fontWeight: 800, color: '#1e1b4b' }}>TOTAL</span>
+            <span style={{ fontSize: '22px', fontWeight: 800, color: '#6b21a8' }}>KSh {total.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Payment note */}
+        <div style={{ margin: '0 28px 20px', padding: '14px 18px', background: '#fef3c7', borderRadius: '10px', border: '1px solid #f59e0b' }}>
+          <div style={{ fontWeight: 700, color: '#6b21a8', marginBottom: '6px' }}>💳 Pay via M-Pesa</div>
+          <div style={{ fontSize: '13px', color: '#6b7280' }}>
+            Pay to: <strong style={{ color: '#1e1b4b' }}>{SHOP.phone}</strong> — Use order number <strong>#{order.order_id}</strong> as reference.
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ background: '#6b21a8', padding: '14px 20px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
+          Thank you for shopping with {SHOP.name}! 🎉 &nbsp;|&nbsp; {SHOP.phone} &nbsp;|&nbsp; {SHOP.email}
+        </div>
       </div>
     </div>
   );

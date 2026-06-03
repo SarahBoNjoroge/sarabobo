@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 function CartQueryParams() {
   const { useSearchParams } = require('next/navigation');
   const searchParams = useSearchParams();
-  const ref = searchParams.get('ref');
-  return ref ? <div style={{ marginBottom: 8, fontSize: 12, color: '#6b21a8' }}>Referral: {ref}</div> : null;
+  return null;
 }
 
 export default function CartPage() {
@@ -23,7 +23,7 @@ export default function CartPage() {
     } catch { setCart([]); }
   };
 
-  const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const total = cart.reduce((sum, i) => sum + parseFloat(i.price) * (i.quantity || 1), 0);
 
   const removeItem = (id, type) => {
     const updated = cart.filter(item => !(item.id === id && item.type === type));
@@ -34,7 +34,7 @@ export default function CartPage() {
   const updateQty = (id, type, delta) => {
     const updated = cart.map(item => {
       if (item.id === id && item.type === type) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+        return { ...item, quantity: Math.max(1, (item.quantity || 1) + delta) };
       }
       return item;
     });
@@ -44,7 +44,7 @@ export default function CartPage() {
 
   // ✅ CHECK LOGIN BEFORE CHECKOUT
   const handleGoToCheckout = () => {
-    if (cart.length === 0) { setMessage('❗ Cart is empty.'); return; }
+    if (cart.length === 0) { setMessage('Your cart is empty.'); return; }
     const customerId = localStorage.getItem('customerId');
     if (!customerId) {
       router.push('/customer/login?msg=Please login to checkout');
@@ -53,168 +53,88 @@ export default function CartPage() {
     router.push('/customer/checkout');
   };
 
-  const getItemImage = (item) => {
-    if (item.image) return item.image;
-    if (item.type === 'book')
-      return 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=80&h=80&fit=crop';
-    return 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=80&h=80&fit=crop';
-  };
-
-  const purple = '#6b21a8';
-  const darkPurple = '#4c1d95';
-  const yellow = '#f59e0b';
-  const yellowHover = '#d97706';
-
   return (
-    <>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <style>{`
-        @media (max-width: 768px) {
-          .cart-grid { grid-template-columns: 1fr !important; }
-          .cart-item { flex-wrap: wrap; }
-        }
-      `}</style>
-      <div style={{ minHeight: '100vh', background: '#f3f0ff', fontFamily: "'DM Sans', sans-serif", padding: '24px 16px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-            <div style={{ background: purple, borderRadius: 10, padding: '8px 12px', fontSize: 22 }}>🛒</div>
-            <div>
-              <h1 style={{ fontSize: 22, fontWeight: 700, color: darkPurple, margin: 0 }}>Shopping Cart</h1>
-              <p style={{ fontSize: 13, color: '#7c3aed', margin: 0 }}>{cart.length} item{cart.length !== 1 ? 's' : ''} in your cart</p>
-            </div>
-            <button
-              onClick={() => router.push('/customer/home')}
-              style={{ marginLeft: 'auto', background: 'none', border: `1.5px solid ${purple}`, color: purple, borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >
-              ← Continue Shopping
-            </button>
-          </div>
-
-          <Suspense fallback={null}><CartQueryParams /></Suspense>
-          {message && (
-            <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 6, padding: '10px 16px', marginBottom: 16, fontSize: 14, color: '#000000', fontWeight: 600 }}>
-              {message}
-            </div>
-          )}
-
-          {/* Two-column layout */}
-          <div className="cart-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
-
-            {/* LEFT: Items */}
-            <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px rgba(107,33,168,0.08)', overflow: 'hidden' }}>
-              <div style={{ background: purple, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Your Items</span>
-                <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>{cart.length} product{cart.length !== 1 ? 's' : ''}</span>
-              </div>
-
-              {cart.length === 0 ? (
-                <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 64, marginBottom: 16 }}>🛒</div>
-                  <h3 style={{ fontSize: 18, fontWeight: 600, color: darkPurple, marginBottom: 8 }}>Your cart is empty</h3>
-                  <p style={{ fontSize: 14, color: '#9ca3af' }}>Browse our books and stationery to get started!</p>
-                  <button
-                    onClick={() => router.push('/customer/home')}
-                    style={{ marginTop: 20, background: purple, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}
-                  >
-                    Start Shopping
-                  </button>
-                </div>
-              ) : (
-                cart.map((item, idx) => (
-                  <div key={idx} className="cart-item" style={{
-                    display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px',
-                    borderBottom: idx < cart.length - 1 ? '1px solid #f3f0ff' : 'none',
-                  }}>
-                    <img
-                      src={getItemImage(item)}
-                      alt={item.title || item.name}
-                      style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', border: '2px solid #ede9fe', flexShrink: 0 }}
-                      onError={e => {
-                        e.target.src = item.type === 'book'
-                          ? 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=80&h=80&fit=crop'
-                          : 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=80&h=80&fit=crop';
-                      }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#000000', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.title || item.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#7c3aed', textTransform: 'capitalize', marginBottom: 4, fontWeight: 500 }}>
-                        {item.type}
-                      </div>
-                      {/* ✅ STRONG BLACK price */}
-                      <div style={{ fontSize: 13, color: '#000000', fontWeight: 600 }}>
-                        Ksh {Number(item.price).toLocaleString()} each
-                      </div>
-                    </div>
-
-                    {/* Qty controls */}
-                    <div style={{ display: 'flex', alignItems: 'center', border: `1.5px solid ${purple}`, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
-                      <button onClick={() => updateQty(item.id, item.type, -1)} style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}>−</button>
-                      <span style={{ width: 34, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#000000', borderLeft: `1px solid #ede9fe`, borderRight: `1px solid #ede9fe` }}>
-                        {item.quantity}
-                      </span>
-                      <button onClick={() => updateQty(item.id, item.type, 1)} style={{ width: 30, height: 30, background: '#f5f3ff', border: 'none', cursor: 'pointer', fontSize: 16, color: purple, fontWeight: 700 }}>+</button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-                      {/* ✅ STRONG BLACK subtotal */}
-                      <span style={{ fontSize: 15, fontWeight: 700, color: '#000000' }}>
-                        Ksh {(item.price * item.quantity).toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => removeItem(item.id, item.type)}
-                        style={{ fontSize: 12, color: '#ef4444', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: 4, padding: '3px 8px', cursor: 'pointer', fontWeight: 500 }}
-                      >
-                        🗑 Remove
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* RIGHT: Order Summary */}
-            <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 2px 8px rgba(107,33,168,0.08)', overflow: 'hidden', position: 'sticky', top: 20 }}>
-              <div style={{ background: darkPurple, padding: '14px 20px' }}>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Order Summary</span>
-              </div>
-              <div style={{ padding: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#000000' }}>
-                  <span style={{ fontWeight: 600 }}>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
-                  <span style={{ fontWeight: 700, color: '#000000' }}>Ksh {total.toLocaleString()}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14, color: '#000000' }}>
-                  <span style={{ fontWeight: 600 }}>Delivery</span>
-                  <span style={{ color: '#16a34a', fontWeight: 600 }}>At checkout</span>
-                </div>
-                <hr style={{ border: 'none', borderTop: '1px dashed #ede9fe', margin: '14px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  {/* ✅ STRONG BLACK total */}
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#000000' }}>Total</span>
-                  <span style={{ fontSize: 22, fontWeight: 700, color: '#000000' }}>Ksh {total.toLocaleString()}</span>
-                </div>
-                <button
-                  onClick={handleGoToCheckout}
-                  disabled={cart.length === 0}
-                  style={{
-                    width: '100%', padding: 13, background: yellow, color: '#000000',
-                    border: 'none', borderRadius: 6, fontSize: 15, fontWeight: 700,
-                    cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                    marginBottom: 10, opacity: cart.length === 0 ? 0.5 : 1,
-                  }}
-                  onMouseOver={e => e.target.style.background = yellowHover}
-                  onMouseOut={e => e.target.style.background = yellow}
-                >
-                  Proceed to Checkout →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div style={{ minHeight: '100vh', background: '#f5f3ff', fontFamily: "'Segoe UI', sans-serif" }}>
+      {/* Topbar */}
+      <div style={{ background: '#6b21a8', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <Link href="/customer/home" style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24', textDecoration: 'none' }}>📚 Brightmind Books</Link>
+        <Link href="/customer/home" style={{ color: '#fbbf24', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>← Continue Shopping</Link>
       </div>
-    </>
+
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '28px 16px' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#6b21a8', marginBottom: '20px' }}>🛒 My Cart</h2>
+
+        <Suspense fallback={null}><CartQueryParams /></Suspense>
+
+        {message && (
+          <div style={{ background: '#fee2e2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>{message}</div>
+        )}
+
+        {cart.length === 0 ? (
+          <div style={{ background: '#fff', borderRadius: '14px', padding: '60px 20px', textAlign: 'center', border: '1px solid #ddd6fe' }}>
+            <div style={{ fontSize: '52px', marginBottom: '16px' }}>🛒</div>
+            <h3 style={{ color: '#6b21a8', marginBottom: '8px' }}>Your cart is empty</h3>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>Browse our books and stationery to get started</p>
+            <Link href="/" style={{ background: '#f59e0b', color: '#1e1b4b', padding: '12px 24px', borderRadius: '8px', textDecoration: 'none', fontWeight: 700, fontSize: '14px' }}>Browse Products</Link>
+          </div>
+        ) : (
+          <>
+            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #ddd6fe', overflow: 'hidden', marginBottom: '20px' }}>
+              {cart.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: i < cart.length - 1 ? '1px solid #f3f0ff' : 'none', gap: '16px', flexWrap: 'wrap' }}>
+                  {/* Image */}
+                  <div style={{ width: '60px', height: '60px', background: '#f5f3ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                    {item.image
+                      ? <img src={item.image} alt={item.title || item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                      : <span style={{ fontSize: '28px' }}>{item.type === 'book' ? '📚' : '✏️'}</span>
+                    }
+                  </div>
+
+                  {/* Details */}
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e1b4b' }}>{item.title || item.name}</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px', textTransform: 'capitalize' }}>{item.type}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#6b21a8', marginTop: '4px' }}>KSh {parseFloat(item.price).toLocaleString()}</div>
+                  </div>
+
+                  {/* Qty controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button onClick={() => updateQty(item.id, item.type, -1)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1.5px solid #ddd6fe', background: '#f5f3ff', color: '#6b21a8', cursor: 'pointer', fontWeight: 700, fontSize: '16px' }}>−</button>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1e1b4b', minWidth: '20px', textAlign: 'center' }}>{item.quantity || 1}</span>
+                    <button onClick={() => updateQty(item.id, item.type, 1)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1.5px solid #ddd6fe', background: '#f5f3ff', color: '#6b21a8', cursor: 'pointer', fontWeight: 700, fontSize: '16px' }}>+</button>
+                  </div>
+
+                  {/* Item total */}
+                  <div style={{ fontWeight: 700, color: '#6b21a8', fontSize: '15px', minWidth: '80px', textAlign: 'right' }}>
+                    KSh {(parseFloat(item.price) * (item.quantity || 1)).toLocaleString()}
+                  </div>
+
+                  {/* Remove */}
+                  <button onClick={() => removeItem(item.id, item.type)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>Remove</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary */}
+            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #ddd6fe', padding: '20px 24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>Subtotal ({cart.length} item{cart.length !== 1 ? 's' : ''})</span>
+                <span style={{ color: '#1e1b4b', fontWeight: 600 }}>KSh {total.toLocaleString()}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '12px', borderTop: '2px solid #ddd6fe', marginBottom: '20px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: '#1e1b4b' }}>Total</span>
+                <span style={{ fontSize: '20px', fontWeight: 800, color: '#6b21a8' }}>KSh {total.toLocaleString()}</span>
+              </div>
+              <button onClick={handleGoToCheckout} style={{ width: '100%', padding: '14px', background: '#f59e0b', color: '#1e1b4b', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 700, cursor: 'pointer' }}>
+                ✅ Proceed to Checkout
+              </button>
+              <p style={{ textAlign: 'center', fontSize: '12px', color: '#6b7280', marginTop: '10px' }}>
+                🔒 Login required to complete your order
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

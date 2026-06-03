@@ -3,10 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import CartIcon from '../../components/CartIcon';
 
 function SearchBar() {
-  'use client';
   const { useSearchParams } = require('next/navigation');
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -14,25 +12,14 @@ function SearchBar() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/customer/search?q=${encodeURIComponent(query.trim())}`);
-    }
+    if (query.trim()) router.push(`/customer/search?q=${encodeURIComponent(query.trim())}`);
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex justify-center mt-4">
-      <input
-        type="text"
-        placeholder="Search for books or stationery..."
-        className="w-full max-w-md px-4 py-2 rounded-l-lg text-black"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <button
-        type="submit"
-        className="px-6 py-2 rounded-r-lg font-semibold hover:opacity-90"
-        style={{ background: '#f59e0b', color: '#1e1b4b' }}
-      >
+    <form onSubmit={handleSearch} style={{ display: 'flex', maxWidth: '520px', margin: '0 auto', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+      <input type="text" placeholder="Search for books or stationery..." value={query} onChange={e => setQuery(e.target.value)}
+        style={{ flex: 1, padding: '13px 16px', border: 'none', fontSize: '15px', outline: 'none', color: '#1e1b4b', minWidth: 0 }} />
+      <button type="submit" style={{ background: '#f59e0b', color: '#1e1b4b', border: 'none', padding: '13px 20px', fontWeight: 700, cursor: 'pointer', fontSize: '14px', whiteSpace: 'nowrap' }}>
         🔍 Search
       </button>
     </form>
@@ -42,128 +29,157 @@ function SearchBar() {
 export default function HomePage() {
   const router = useRouter();
   const [customerName, setCustomerName] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const customerId = localStorage.getItem('customerId');
-      if (!customerId) return;
-      try {
-        const res = await fetch(`http://127.0.0.1/bookshop/api/customer/profile.php?id=${customerId}`);
-        const data = await res.json();
-        if (data.success && data.data) {
-          setCustomerName(data.data.username);
-        } else {
-          setCustomerName('');
-        }
-      } catch { setCustomerName(''); }
-    };
-    fetchProfile();
+    const customerId = localStorage.getItem('customerId');
+    if (!customerId) { router.push('/customer/login'); return; }
+    setCustomerName(localStorage.getItem('customerName') || 'Customer');
   }, []);
 
-  // ✅ LOGOUT — does NOT clear sharedCart
   const logout = () => {
     localStorage.removeItem('customerId');
     localStorage.removeItem('customerName');
     localStorage.removeItem('customerPhone');
     localStorage.removeItem('lastOrderId');
-    // ✅ sharedCart is intentionally NOT removed here
     router.push('/customer/login');
   };
 
   return (
-    <div className="min-h-screen text-gray-800 font-sans flex" style={{ background: '#f5f3ff' }}>
+    <>
+      <style>{`
+        * { box-sizing: border-box; }
+        .sidebar { display: flex; }
+        .mobile-nav { display: none; }
+        @media (max-width: 768px) {
+          .sidebar { display: none; }
+          .mobile-nav { display: flex; }
+          .hero-title { font-size: 28px !important; }
+          .hero-sub { font-size: 15px !important; }
+          .features-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
-      {/* Sidebar */}
-      <div className="w-56 text-white p-6 hidden md:flex flex-col items-center gap-6 pt-10" style={{ background: '#6b21a8' }}>
-        <Link href="/customer/profile" className="flex flex-col items-center gap-2 hover:opacity-90 transition">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg" style={{ background: '#f59e0b' }}>
-            <span className="text-3xl">👤</span>
-          </div>
-          <span className="text-sm font-semibold text-center" style={{ color: '#fbbf24' }}>
-            {customerName || 'My Profile'}
-          </span>
-        </Link>
-        <button
-          onClick={logout}
-          className="mt-2 px-4 py-2 rounded text-sm font-semibold w-full"
-          style={{ background: '#dc2626', color: '#fff' }}
-        >
-          Logout
-        </button>
-      </div>
+      <div style={{ minHeight: '100vh', background: '#f5f3ff', fontFamily: "'Segoe UI', sans-serif", display: 'flex', flexDirection: 'column' }}>
 
-      {/* Main Content */}
-      <div className="flex-1">
-        {/* Hero Section */}
-        <div
-          className="relative bg-cover bg-center h-[95vh] flex items-center justify-center text-center"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=1470&q=80')" }}
-        >
-          <div className="absolute inset-0 opacity-80" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #6b21a8 60%, #7c3aed 100%)' }}></div>
-          <div className="relative z-10 text-white px-6 max-w-3xl">
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-xl" style={{ color: '#fbbf24' }}>
-              Welcome to Brightmind Books
-            </h1>
-            <p className="text-xl mb-6" style={{ color: '#e9d5ff' }}>
-              Discover books, stationery, and educational resources designed to elevate your learning and fuel your passion for knowledge.
-            </p>
-            <Suspense fallback={null}><SearchBar /></Suspense>
-            <div className="flex justify-center gap-4 mt-6 flex-wrap">
-              <Link href="/customer/dashboard" className="px-6 py-2 rounded-lg font-semibold shadow-md transition hover:opacity-90" style={{ background: '#f59e0b', color: '#1e1b4b' }}>
-                Browse Books
-              </Link>
-              <Link href="/customer/stationery" className="px-6 py-2 rounded-lg font-semibold shadow-md transition hover:opacity-90" style={{ background: '#fff', color: '#6b21a8' }}>
-                Browse Stationery
-              </Link>
-              <Link href="/customer/cart" className="px-6 py-2 rounded-lg font-semibold shadow-md transition hover:opacity-90" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)' }}>
-                🛒 My Cart
-              </Link>
-            </div>
-          </div>
+        {/* ── MOBILE TOP NAV (visible only on phones) ── */}
+        <div className="mobile-nav" style={{ background: '#6b21a8', padding: '12px 16px', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>📚 Brightmind</span>
+          <button onClick={() => setMenuOpen(o => !o)} style={{ background: 'none', border: 'none', color: '#fbbf24', fontSize: '26px', cursor: 'pointer' }}>
+            {menuOpen ? '✕' : '☰'}
+          </button>
         </div>
 
-        {/* About Section */}
-        <section className="py-16 px-6 max-w-5xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4" style={{ color: '#6b21a8' }}>About Brightmind Books</h2>
-          <p className="text-lg text-gray-700">
-            Brightmind Books is your gateway to academic excellence. We provide a curated selection of textbooks, novels, and professional guides alongside essential stationery. Our mission is to empower learners and lifelong readers across Kenya.
-          </p>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-16 px-6" style={{ background: 'linear-gradient(135deg, #ede9fe 0%, #fff 50%, #fef3c7 100%)' }}>
-          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center">
-            <div className="p-6 bg-white shadow rounded-lg border-t-4" style={{ borderColor: '#6b21a8' }}>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: '#6b21a8' }}>📚 Extensive Book Collection</h3>
-              <p className="text-gray-600">From academic material to your favorite reads, explore a world of stories and knowledge.</p>
-            </div>
-            <div className="p-6 bg-white shadow rounded-lg border-t-4" style={{ borderColor: '#f59e0b' }}>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: '#6b21a8' }}>🖊️ Premium Stationery</h3>
-              <p className="text-gray-600">Everything you need to write, draw, and plan — all in one place.</p>
-            </div>
-            <div className="p-6 bg-white shadow rounded-lg border-t-4" style={{ borderColor: '#6b21a8' }}>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: '#6b21a8' }}>🧾 Smooth Online Ordering</h3>
-              <p className="text-gray-600">Order books and stationery online with instant invoice generation.</p>
-            </div>
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div style={{ background: '#4c1d95', padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: '4px', position: 'sticky', top: '52px', zIndex: 99 }}>
+            {[
+              { href: '/customer/profile', icon: '👤', label: customerName || 'My Profile' },
+              { href: '/customer/dashboard', icon: '📚', label: 'Books' },
+              { href: '/customer/stationery', icon: '✏️', label: 'Stationery' },
+              { href: '/customer/cart', icon: '🛒', label: 'My Cart' },
+              { href: '/customer/reviews', icon: '✍️', label: 'Reviews' },
+            ].map(item => (
+              <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
+                style={{ color: '#fff', textDecoration: 'none', padding: '10px 14px', borderRadius: '8px', fontWeight: 600, fontSize: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>{item.icon}</span> {item.label}
+              </Link>
+            ))}
+            <button onClick={() => { logout(); setMenuOpen(false); }}
+              style={{ color: '#fca5a5', background: 'none', border: 'none', padding: '10px 14px', borderRadius: '8px', fontWeight: 600, fontSize: '15px', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>🚪</span> Logout
+            </button>
           </div>
-        </section>
+        )}
 
-        {/* Contact Section */}
-        <section className="py-16 px-6 text-center max-w-4xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-3" style={{ color: '#6b21a8' }}>Contact Us</h2>
-          <p className="text-gray-700">📧 Email: support@brightmindbooks.co.ke</p>
-          <p className="text-gray-700">📞 Phone: +254 712 345 678</p>
-          <p className="mt-2 text-gray-500">We're here to help — reach out anytime!</p>
-          <Link href="/customer/reviews" className="mt-4 inline-block text-white px-6 py-2 rounded hover:opacity-90 transition" style={{ background: '#6b21a8' }}>
-            ✍️ Give a Review
-          </Link>
-        </section>
+        <div style={{ display: 'flex', flex: 1 }}>
+          {/* ── DESKTOP SIDEBAR ── */}
+          <div className="sidebar" style={{ width: '220px', background: '#6b21a8', padding: '24px 16px', flexDirection: 'column', alignItems: 'center', gap: '16px', minHeight: '100vh', position: 'sticky', top: 0 }}>
+            <Link href="/customer/profile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>👤</div>
+              <span style={{ color: '#fbbf24', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>{customerName || 'My Profile'}</span>
+            </Link>
 
-        {/* Footer */}
-        <footer className="text-gray-300 text-sm text-center py-4" style={{ background: '#1e1b4b' }}>
-          © {new Date().getFullYear()} Brightmind Books. All rights reserved.
-        </footer>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+              {[
+                { href: '/customer/dashboard', icon: '📚', label: 'Books' },
+                { href: '/customer/stationery', icon: '✏️', label: 'Stationery' },
+                { href: '/customer/cart', icon: '🛒', label: 'My Cart' },
+                { href: '/customer/profile', icon: '👤', label: 'My Profile' },
+                { href: '/customer/reviews', icon: '✍️', label: 'Reviews' },
+              ].map(item => (
+                <Link key={item.href} href={item.href}
+                  style={{ color: '#e9d5ff', textDecoration: 'none', padding: '10px 12px', borderRadius: '8px', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{item.icon}</span> {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <button onClick={logout} style={{ marginTop: 'auto', width: '100%', padding: '10px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+              Logout
+            </button>
+          </div>
+
+          {/* ── MAIN CONTENT ── */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Hero */}
+            <div style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #6b21a8 60%, #7c3aed 100%)', padding: 'clamp(32px,6vw,80px) 20px', textAlign: 'center' }}>
+              <h1 className="hero-title" style={{ fontSize: 'clamp(24px,5vw,52px)', fontWeight: 800, color: '#fbbf24', marginBottom: '12px' }}>
+                Welcome to Brightmind Books
+              </h1>
+              <p className="hero-sub" style={{ fontSize: 'clamp(14px,2vw,18px)', color: '#e9d5ff', marginBottom: '24px', maxWidth: '600px', margin: '0 auto 24px' }}>
+                Discover CBC books, stationery, and educational resources.
+              </p>
+              <Suspense fallback={null}><SearchBar /></Suspense>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '20px', flexWrap: 'wrap' }}>
+                <Link href="/customer/dashboard" style={{ background: '#f59e0b', color: '#1e1b4b', padding: '12px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '15px' }}>Browse Books</Link>
+                <Link href="/customer/stationery" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '12px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '15px', border: '1.5px solid rgba(255,255,255,0.4)' }}>Browse Stationery</Link>
+                <Link href="/customer/cart" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '12px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '15px', border: '1.5px solid rgba(255,255,255,0.4)' }}>🛒 My Cart</Link>
+              </div>
+            </div>
+
+            {/* About */}
+            <section style={{ padding: 'clamp(32px,4vw,60px) clamp(16px,4vw,40px)', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+              <h2 style={{ fontSize: 'clamp(20px,4vw,32px)', fontWeight: 700, color: '#6b21a8', marginBottom: '12px' }}>About Brightmind Books</h2>
+              <p style={{ fontSize: '15px', color: '#6b7280', lineHeight: 1.7 }}>
+                Brightmind Books is your gateway to academic excellence. We provide a curated selection of CBC textbooks, novels, and professional guides alongside essential stationery. Our mission is to empower learners across Kenya.
+              </p>
+            </section>
+
+            {/* Features */}
+            <section style={{ padding: 'clamp(24px,4vw,48px) clamp(16px,4vw,40px)', background: 'linear-gradient(135deg, #ede9fe 0%, #fff 50%, #fef3c7 100%)' }}>
+              <div className="features-grid" style={{ maxWidth: '900px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                {[
+                  { icon: '📚', title: 'Extensive Book Collection', desc: 'From CBC academic material to your favourite reads.' },
+                  { icon: '✏️', title: 'Premium Stationery', desc: 'Everything you need to write, draw, and plan.' },
+                  { icon: '🧾', title: 'Smooth Online Ordering', desc: 'Order online with instant invoice generation.' },
+                ].map(f => (
+                  <div key={f.title} style={{ background: '#fff', borderRadius: '14px', padding: '24px 20px', boxShadow: '0 2px 12px rgba(107,33,168,0.07)', borderTop: '4px solid #6b21a8', textAlign: 'center' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>{f.icon}</div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#6b21a8', marginBottom: '8px' }}>{f.title}</h3>
+                    <p style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.6 }}>{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Contact */}
+            <section style={{ padding: 'clamp(24px,4vw,48px) clamp(16px,4vw,40px)', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#6b21a8', marginBottom: '12px' }}>Contact Us</h2>
+              <p style={{ color: '#6b7280', marginBottom: '6px' }}>📧 info@brightmindbooks.co.ke</p>
+              <p style={{ color: '#6b7280', marginBottom: '16px' }}>📞 +254 700 000 000</p>
+              <Link href="/customer/reviews" style={{ background: '#6b21a8', color: '#fff', padding: '12px 24px', borderRadius: '8px', textDecoration: 'none', fontWeight: 700, fontSize: '14px' }}>
+                ✍️ Leave a Review
+              </Link>
+            </section>
+
+            {/* Footer */}
+            <footer style={{ background: '#1e1b4b', color: 'rgba(255,255,255,0.6)', fontSize: '13px', textAlign: 'center', padding: '16px 20px' }}>
+              © {new Date().getFullYear()} Brightmind Books. All rights reserved.
+            </footer>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

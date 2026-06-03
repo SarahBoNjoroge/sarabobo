@@ -1,19 +1,9 @@
 'use client';
-
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-function ProfileQueryInfo() {
-  const { useSearchParams } = require('next/navigation');
-  const searchParams = useSearchParams();
-  const ref = searchParams.get('ref');
-  if (!ref) return null;
-  return (
-    <div className="mb-4 p-2 bg-blue-50 text-blue-700 rounded">
-      Referral code: <span className="font-mono">{ref}</span>
-    </div>
-  );
-}
+const API = 'https://tender-empathy-production-c8ad.up.railway.app';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,16 +13,15 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ username: '', full_name: '', phone: '', email: '' });
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const customerId = localStorage.getItem('customerId');
     if (!customerId) { router.push('/customer/login'); return; }
 
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`https://tender-empathy-production-c8ad.up.railway.app/api/customer/profile.php?id=${customerId}`);
-        const data = await res.json();
-
+    fetch(`${API}/api/customer/profile.php?id=${customerId}`)
+      .then(r => r.json())
+      .then(data => {
         if (data.success && data.data) {
           const u = data.data;
           setProfile({ id: u.id, username: u.username, full_name: u.full_name || '', phone: u.phone || '', email: u.email });
@@ -42,159 +31,137 @@ export default function ProfilePage() {
         } else {
           router.push('/customer/login');
         }
-      } catch {
-        router.push('/customer/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+      })
+      .catch(() => router.push('/customer/login'))
+      .finally(() => setLoading(false));
   }, [router]);
 
   const handleLogout = () => {
-    ['customerId', 'customerName', 'customerPhone', 'sharedCart', 'lastOrderId'].forEach(k => localStorage.removeItem(k));
+    ['customerId', 'customerName', 'customerPhone', 'lastOrderId'].forEach(k => localStorage.removeItem(k));
     router.push('/customer/login');
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSave = async () => {
-    if (!form.full_name || !form.phone || !form.username || !form.email) {
-      alert('All fields are required'); return;
-    }
-    if (!/^(07|01)\d{8}$/.test(form.phone)) {
-      alert('Invalid phone. Use 07XXXXXXXX'); return;
-    }
-
+    if (!form.full_name || !form.phone || !form.username || !form.email) { setMessage('All fields are required'); return; }
+    if (!/^(07|01)\d{8}$/.test(form.phone)) { setMessage('Invalid phone. Use 07XXXXXXXX'); return; }
     setSaving(true);
     try {
-      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/customer/profile.php', {
+      const res = await fetch(`${API}/api/customer/profile.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: profile.id, ...form }),
       });
       const data = await res.json();
-
       if (data.success) {
         setProfile({ ...profile, ...form });
         localStorage.setItem('customerName', form.username);
         localStorage.setItem('customerPhone', form.phone);
         setEditing(false);
+        setMessage('Profile updated successfully!');
+        setTimeout(() => setMessage(''), 3000);
       } else {
-        alert(data.message || 'Update failed');
+        setMessage(data.message || 'Update failed');
       }
-    } catch {
-      alert('Network error');
-    } finally {
-      setSaving(false);
-    }
+    } catch { setMessage('Network error'); }
+    setSaving(false);
   };
 
   const handleDeleteAccount = async () => {
     try {
-      const res = await fetch('https://tender-empathy-production-c8ad.up.railway.app/api/customer/profile.php', {
+      const res = await fetch(`${API}/api/customer/profile.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: profile.id }),
       });
       const data = await res.json();
-
       if (data.success) {
         ['customerId', 'customerName', 'customerPhone', 'sharedCart', 'lastOrderId'].forEach(k => localStorage.removeItem(k));
         router.push('/customer/register');
       } else {
-        alert(data.message || 'Delete failed');
+        setMessage(data.message || 'Delete failed');
       }
-    } catch {
-      alert('Network error');
-    }
+    } catch { setMessage('Network error'); }
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center text-gray-700">Loading profile...</div>;
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#f5f3ff' }}>
+      <p style={{ color: '#6b21a8', fontSize: '16px' }}>Loading profile...</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 text-black">
-      <div className="max-w-xl mx-auto bg-white shadow p-6 rounded">
-        <Suspense fallback={null}><ProfileQueryInfo /></Suspense>
-
-        <div className="flex items-center mb-6 gap-4">
-          <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center text-white text-2xl">👤</div>
-          <div>
-            <h2 className="text-2xl font-bold">My Profile</h2>
-            <p className="text-sm text-gray-500">Customer ID: {profile.id}</p>
-          </div>
+    <div style={{ minHeight: '100vh', background: '#f5f3ff', fontFamily: "'Segoe UI', sans-serif" }}>
+      {/* Topbar */}
+      <div style={{ background: '#6b21a8', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <Link href="/customer/home" style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24', textDecoration: 'none' }}>📚 Brightmind Books</Link>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link href="/customer/home" style={{ color: '#fbbf24', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>← Home</Link>
+          <button onClick={handleLogout} style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>Logout</button>
         </div>
+      </div>
 
-        <div className="space-y-4">
-
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Full Name</label>
-            <input type="text" name="full_name" value={form.full_name} onChange={handleChange} disabled={!editing}
-              className="w-full border px-4 py-2 rounded text-black disabled:bg-gray-100" placeholder="Your full name" />
+      <div style={{ maxWidth: '560px', margin: '30px auto', padding: '0 16px' }}>
+        <div style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 4px 24px rgba(107,33,168,0.10)', border: '1px solid #ddd6fe', overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{ background: 'linear-gradient(135deg, #6b21a8, #7c3aed)', padding: '28px 24px', textAlign: 'center' }}>
+            <div style={{ width: '72px', height: '72px', background: '#f59e0b', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: '32px' }}>👤</div>
+            <h2 style={{ color: '#fbbf24', fontSize: '22px', fontWeight: 800, margin: 0 }}>{profile.username}</h2>
+            <p style={{ color: '#e9d5ff', fontSize: '13px', margin: '4px 0 0' }}>Customer ID: {profile.id}</p>
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Username</label>
-            <input type="text" name="username" value={form.username} onChange={handleChange} disabled={!editing}
-              className="w-full border px-4 py-2 rounded text-black disabled:bg-gray-100" />
-          </div>
+          <div style={{ padding: '24px' }}>
+            {message && (
+              <div style={{ background: message.includes('success') ? '#dcfce7' : '#fee2e2', color: message.includes('success') ? '#16a34a' : '#dc2626', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>
+                {message}
+              </div>
+            )}
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Phone Number</label>
-            <input type="tel" name="phone" value={form.phone} onChange={handleChange} disabled={!editing}
-              className="w-full border px-4 py-2 rounded text-black disabled:bg-gray-100" placeholder="07XXXXXXXX" />
-          </div>
+            {[
+              { label: 'Full Name', name: 'full_name', type: 'text', placeholder: 'Your full name' },
+              { label: 'Username', name: 'username', type: 'text', placeholder: 'Username' },
+              { label: 'Phone Number', name: 'phone', type: 'tel', placeholder: '07XXXXXXXX' },
+              { label: 'Email', name: 'email', type: 'email', placeholder: 'you@example.com' },
+            ].map(field => (
+              <div key={field.name} style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#4c1d95', marginBottom: '6px' }}>{field.label}</label>
+                <input type={field.type} name={field.name} value={form[field.name]} onChange={handleChange} disabled={!editing} placeholder={field.placeholder}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '8px', border: `1.5px solid ${editing ? '#6b21a8' : '#ddd6fe'}`, fontSize: '14px', color: '#1e1b4b', outline: 'none', boxSizing: 'border-box', background: editing ? '#faf9ff' : '#f9fafb' }} />
+              </div>
+            ))}
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} disabled={!editing}
-              className="w-full border px-4 py-2 rounded text-black disabled:bg-gray-100" />
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-6 flex justify-between flex-wrap gap-2">
-          <button
-            onClick={editing ? handleSave : () => setEditing(true)}
-            disabled={saving}
-            className={`px-6 py-2 rounded text-white ${editing ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-          >
-            {saving ? 'Saving...' : editing ? 'Save Changes' : 'Edit Profile'}
-          </button>
-
-          {editing && (
-            <button onClick={() => setEditing(false)} className="px-6 py-2 rounded bg-gray-400 hover:bg-gray-500 text-white">
-              Cancel
-            </button>
-          )}
-
-          <button onClick={handleLogout} className="px-6 py-2 rounded bg-red-600 hover:bg-red-700 text-white">
-            Logout
-          </button>
-        </div>
-
-        {/* Delete Account */}
-        <div className="mt-6 border-t pt-4">
-          {!showDeleteConfirm ? (
-            <button onClick={() => setShowDeleteConfirm(true)} className="text-red-500 text-sm hover:underline">
-              🗑 Delete My Account
-            </button>
-          ) : (
-            <div className="bg-red-50 border border-red-200 rounded p-4">
-              <p className="text-red-700 font-semibold mb-3">⚠️ Are you sure? This cannot be undone.</p>
-              <div className="flex gap-3">
-                <button onClick={handleDeleteAccount} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
-                  Yes, Delete Account
-                </button>
-                <button onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm">
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '20px' }}>
+              <button onClick={editing ? handleSave : () => setEditing(true)} disabled={saving}
+                style={{ flex: 1, padding: '12px', background: editing ? '#16a34a' : '#6b21a8', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
+                {saving ? 'Saving...' : editing ? '✅ Save Changes' : '✏️ Edit Profile'}
+              </button>
+              {editing && (
+                <button onClick={() => { setEditing(false); setForm({ username: profile.username, full_name: profile.full_name, phone: profile.phone, email: profile.email }); }}
+                  style={{ padding: '12px 20px', background: '#6b7280', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>
                   Cancel
                 </button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
 
+            {/* Delete account */}
+            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #f3f0ff' }}>
+              {!showDeleteConfirm ? (
+                <button onClick={() => setShowDeleteConfirm(true)} style={{ color: '#dc2626', background: 'none', border: 'none', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
+                  🗑 Delete My Account
+                </button>
+              ) : (
+                <div style={{ background: '#fee2e2', borderRadius: '10px', padding: '16px', border: '1px solid #fca5a5' }}>
+                  <p style={{ color: '#dc2626', fontWeight: 700, marginBottom: '12px', fontSize: '14px' }}>⚠️ This cannot be undone. Are you sure?</p>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={handleDeleteAccount} style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>Yes, Delete</button>
+                    <button onClick={() => setShowDeleteConfirm(false)} style={{ background: '#6b7280', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
